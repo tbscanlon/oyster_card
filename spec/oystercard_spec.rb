@@ -1,7 +1,14 @@
 require 'oystercard'
 describe OysterCard do
-  it 'expects to initialize with a balance of 0' do
-    expect(subject.balance).to eq(0)
+
+  describe '#initialize' do
+    it 'expects to initialize with a balance of 0' do
+      expect(subject.balance).to eq(0)
+    end
+
+    it 'expects to initialize with a status of not_in_use' do
+      expect(subject.status).to eq(:not_in_use)
+    end
   end
 
   describe '#top_up' do
@@ -28,6 +35,14 @@ describe OysterCard do
         expect(card.deduct(10)).to eq 40
       end
     end
+  end
 
+  describe '#in_journey?' do
+
+    it { is_expected.to respond_to(:in_journey?) }
+
+    it "returns true when the card is in use" do
+      expect(subject).to_not be_in_journey
+    end
   end
 end
