@@ -7,7 +7,7 @@ describe OysterCard do
   describe '#top_up' do
     it { is_expected.to respond_to(:top_up).with(1).argument }
 
-    it 'tops up the balance' do
+    it 'increases the balance' do
       subject.top_up(50)
       expect(subject.balance).to eq 50
     end
@@ -17,16 +17,17 @@ describe OysterCard do
       expect { subject.top_up(OysterCard::MAXIMUM_BALANCE) }.to raise_error("Can't top up beyond 90 pounds")
     end
   end
-  # describe "#above_limit?" do
-  #   it { is_expected.to respond_to(:above_limit?)}
-  #
-  #   it "returns false if the card is below the limit" do
-  #     expect(subject).to_not be_above_limit
-  #   end
-  #
-  #   it "returns true if the card is above the limit" do
-  #     card = OysterCard.new(100)
-  #     expect(card).to be_above_limit
-  #   end
-  # end
+
+  describe '#deduct' do
+    it { is_expected.to respond_to(:deduct).with(1).argument }
+
+    context "When the card has enough money on it" do
+      let(:card) { described_class.new(50) }
+
+      it 'decreases the balance' do
+        expect(card.deduct(10)).to eq 40
+      end
+    end
+
+  end
 end
