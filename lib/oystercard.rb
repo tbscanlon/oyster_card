@@ -16,7 +16,15 @@ class OysterCard
     @balance -= fare
   end
 
+  def touch_in
+    @status = :in_use
+  end
+
+  def touch_out
+    @status = :not_in_use
+  end
+
   def in_journey?
-    self.status == :in_use
+    @status == :in_use
   end
 end

@@ -38,11 +38,29 @@ describe OysterCard do
   end
 
   describe '#in_journey?' do
-
     it { is_expected.to respond_to(:in_journey?) }
 
-    it "returns true when the card is in use" do
+    it "returns false when the card is not in use" do
       expect(subject).to_not be_in_journey
+    end
+  end
+
+  describe '#touch_in' do
+    it { is_expected.to respond_to(:touch_in) }
+
+    it "changes the status to :in_use" do
+      subject.touch_in
+      expect(subject.status).to eq :in_use
+    end
+  end
+
+  describe '#touch_out' do
+    let(:card) { described_class.new(10, :in_use) }
+    it { is_expected.to respond_to(:touch_out) }
+
+    it "changes the status to :not_in_use" do
+      card.touch_out
+      expect(card.status).to eq :not_in_use 
     end
   end
 end
