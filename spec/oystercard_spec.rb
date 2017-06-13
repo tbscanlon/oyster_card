@@ -1,66 +1,98 @@
-require 'oystercard'
-describe OysterCard do
+require 'Oystercard'
 
-  describe '#initialize' do
-    it 'expects to initialize with a balance of 0' do
+describe Oystercard do
+
+  let(:station) { double(:kings_cross) }
+  let(:exit_station) { double(:waterloo) }
+
+  it { is_expected.to respond_to(:topup).with(1).argument }
+  it { is_expected.to respond_to(:touch_in).with(1).argument }
+  it { is_expected.to respond_to(:touch_out).with(1).argument }
+  it { is_expected.to respond_to(:entry_station) }
+  it { is_expected.to respond_to(:previous_journeys)}
+
+  describe "#balance" do
+    it "should return the balance of the card" do
       expect(subject.balance).to eq(0)
     end
+  end
 
-    it 'expects to initialize with a status of not_in_use' do
-      expect(subject.status).to eq(:not_in_use)
+  describe "#in_journey?" do
+    it "should return false" do
+      expect(subject.in_journey?).to eq(false)
     end
   end
 
-  describe '#top_up' do
-    it { is_expected.to respond_to(:top_up).with(1).argument }
-
-    it 'increases the balance' do
-      subject.top_up(50)
-      expect(subject.balance).to eq 50
+  describe "#topup" do
+    it "should add a specified amount to the balance" do
+      expect{ subject.topup 10 }.to change{ subject.balance }.by 10
     end
 
-    it 'won\'t top up beyond maximum limit' do
-      subject.top_up(1)
-      expect { subject.top_up(OysterCard::MAXIMUM_BALANCE) }.to raise_error("Can't top up beyond 90 pounds")
+    context "new balance would exceed the limit" do
+      it "should raise an error" do
+        subject.topup Oystercard::MAX_LIMIT
+        expect{ subject.topup(1) }.to raise_error("You have reached your maximum balance limit")
+      end
     end
+
   end
 
-  describe '#deduct' do
-    it { is_expected.to respond_to(:deduct).with(1).argument }
 
-    context "When the card has enough money on it" do
-      let(:card) { described_class.new(50) }
+  describe "#touch_in" do
+    context "starting journey" do
 
-      it 'decreases the balance' do
-        expect(card.deduct(10)).to eq 40
+      before do
+        subject.topup(Oystercard::MIN_FARE)
+        subject.touch_in(station)
+      end
+
+      it "should change in_journey to true" do
+        expect(subject).to be_in_journey
+      end
+
+      it "should record the station to entry_station" do
+        expect(subject.entry_station).to eq(station)
+      end
+
+    end
+    context "Not enough money on card" do
+      it "should raise an error" do
+        expect{ subject.touch_in(station) }.to raise_error("Please top up")
       end
     end
   end
 
-  describe '#in_journey?' do
-    it { is_expected.to respond_to(:in_journey?) }
+  describe "#touch_out" do
+    context "finishing journey" do
 
-    it "returns false when the card is not in use" do
-      expect(subject).to_not be_in_journey
+      before do
+        subject.topup(Oystercard::MIN_FARE)
+        subject.touch_in(station)
+        subject.touch_out(exit_station)
+      end
+
+      it "should change in_journey to false" do
+        expect(subject).not_to be_in_journey
+      end
+
+      it "records the journey" do
+        expect(subject.previous_journeys.last).to eq ({entry: station, exit: exit_station})
+      end
+
+      it "should set entry_station to nil" do
+        expect(subject.entry_station).to be_nil
+      end
+
     end
+
+    context "after journey" do
+      it "should deduct my balance by the fare amount" do
+        subject.topup(Oystercard::MIN_FARE)
+        subject.touch_in(station)
+        expect{ subject.touch_out(exit_station) }.to change{ subject.balance }.by -Oystercard::MIN_FARE
+      end
+    end
+
   end
 
-  describe '#touch_in' do
-    it { is_expected.to respond_to(:touch_in) }
-
-    it "changes the status to :in_use" do
-      subject.touch_in
-      expect(subject.status).to eq :in_use
-    end
-  end
-
-  describe '#touch_out' do
-    let(:card) { described_class.new(10, :in_use) }
-    it { is_expected.to respond_to(:touch_out) }
-
-    it "changes the status to :not_in_use" do
-      card.touch_out
-      expect(card.status).to eq :not_in_use 
-    end
-  end
 end
