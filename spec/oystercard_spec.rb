@@ -1,98 +1,93 @@
-require 'Oystercard'
+require 'oystercard.rb'
 
 describe Oystercard do
+  let(:card)          { described_class.new(min_fare) }
+  let(:max_limit)     { described_class::MAX_LIMIT }
+  let(:min_fare)      { described_class::MIN_FARE }
+  let(:entry_station) { double("Aldgate") }
+  let(:exit_station)  { double("Waterloo") }
 
-  let(:station) { double(:kings_cross) }
-  let(:exit_station) { double(:waterloo) }
-
-  it { is_expected.to respond_to(:topup).with(1).argument }
-  it { is_expected.to respond_to(:touch_in).with(1).argument }
-  it { is_expected.to respond_to(:touch_out).with(1).argument }
-  it { is_expected.to respond_to(:entry_station) }
-  it { is_expected.to respond_to(:previous_journeys)}
-
-  describe "#balance" do
-    it "should return the balance of the card" do
-      expect(subject.balance).to eq(0)
-    end
-  end
-
-  describe "#in_journey?" do
-    it "should return false" do
-      expect(subject.in_journey?).to eq(false)
-    end
-  end
-
-  describe "#topup" do
-    it "should add a specified amount to the balance" do
-      expect{ subject.topup 10 }.to change{ subject.balance }.by 10
+  describe 'oystercard creation' do
+    it 'starts off a new oystercard with no station' do
+      expect(card.entry_station).to eq nil
     end
 
-    context "new balance would exceed the limit" do
-      it "should raise an error" do
-        subject.topup Oystercard::MAX_LIMIT
-        expect{ subject.topup(1) }.to raise_error("You have reached your maximum balance limit")
+    describe '#journey_history' do
+      it 'is an array' do
+        expect(card.journey_history).to be_a Array
+      end
+
+      it 'starts off empty' do
+        expect(card.journey_history).to be_empty
       end
     end
-
   end
 
+  describe '#top_up' do
+    context 'Adding money to the card' do
+      it 'adds money to the oystercard balance' do
+        expect { card.top_up 10 }.to change { card.balance }.by 10
+      end
 
-  describe "#touch_in" do
-    context "starting journey" do
+      it 'doesn\'t allow to top up beyond the limit' do
+        expect { card.top_up(max_limit) }.to raise_error("Exceeded #{max_limit} limit")
+      end
+    end
+  end
 
+  describe '#in_journey?' do
+    it 'returns false when customer is not travelling' do
+      expect(card).to_not be_in_journey
+    end
+
+    it 'returns true when the customer is travelling' do
+      card.touch_in(entry_station)
+      expect(card).to be_in_journey
+    end
+  end
+
+  describe '#touch_in' do
+    context "Touching in at a station" do
+      let(:empty_card) { described_class.new }
+
+      it 'raises an error if the balance is less than £1' do
+        expect { empty_card.touch_in(entry_station) }.to raise_error("Please top up at least £#{min_fare}")
+      end
+
+      it 'records the start of the journey' do
+        card.touch_in(entry_station)
+        expect(card.entry_station).to eq entry_station
+      end
+    end
+  end
+
+  describe '#touch_out' do
+    context "When touching out" do
       before do
-        subject.topup(Oystercard::MIN_FARE)
-        subject.touch_in(station)
+        card.touch_in(entry_station)
+        card.touch_out(exit_station)
       end
 
-      it "should change in_journey to true" do
-        expect(subject).to be_in_journey
+      it 'resets the entry station' do
+        expect(card.entry_station).to be_nil
       end
 
-      it "should record the station to entry_station" do
-        expect(subject.entry_station).to eq(station)
-      end
-
-    end
-    context "Not enough money on card" do
-      it "should raise an error" do
-        expect{ subject.touch_in(station) }.to raise_error("Please top up")
+      it 'deducts correct amount when journey\'s complete' do
+        expect(card.balance).to eq 0
       end
     end
   end
 
-  describe "#touch_out" do
-    context "finishing journey" do
-
+  describe '#view_journey_history' do
+    context 'After a complete journey' do
       before do
-        subject.topup(Oystercard::MIN_FARE)
-        subject.touch_in(station)
-        subject.touch_out(exit_station)
+        card.touch_in(entry_station)
+        card.touch_out(exit_station)
       end
 
-      it "should change in_journey to false" do
-        expect(subject).not_to be_in_journey
-      end
-
-      it "records the journey" do
-        expect(subject.previous_journeys.last).to eq ({entry: station, exit: exit_station})
-      end
-
-      it "should set entry_station to nil" do
-        expect(subject.entry_station).to be_nil
-      end
-
-    end
-
-    context "after journey" do
-      it "should deduct my balance by the fare amount" do
-        subject.topup(Oystercard::MIN_FARE)
-        subject.touch_in(station)
-        expect{ subject.touch_out(exit_station) }.to change{ subject.balance }.by -Oystercard::MIN_FARE
+      it 'shows journey history' do
+        expect(card.view_journey_history).to eq [{entry: entry_station, exit: exit_station}]
       end
     end
-
   end
-
 end
