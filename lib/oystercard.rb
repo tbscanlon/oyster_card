@@ -1,7 +1,8 @@
 require_relative 'station'
+require_relative 'journey'
 
 class Oystercard
-  attr_reader :balance, :journey_history
+  attr_reader :balance, :journey_history, :journey
 
   DEFAULT_BALANCE = 0
   MAX_LIMIT       = 90
@@ -9,16 +10,11 @@ class Oystercard
 
   def initialize(balance = DEFAULT_BALANCE)
     @balance          = balance
-    @current_journey  = {}
     @journey_history  = []
   end
 
-  def entry_station
-    @current_journey[:entry]
-  end
-
-  def exit_station
-    @current_journey[:exit]
+  def journey
+    journey_history.last
   end
 
   def top_up(money)
@@ -26,41 +22,23 @@ class Oystercard
     @balance += money
   end
 
-  def in_journey?
-    !!entry_station
-  end
-
-  def touch_in(station)
+  def touch_in(station, journey = Journey.new)
     raise "Please top up at least £#{MIN_FARE}" if @balance < 1
-    record_start(station)
+    journey.record_start(station)
+    @journey_history << journey
   end
 
   def touch_out(station)
     deduct(MIN_FARE)
-    record_end(station)
-    record_journey
+    journey.record_end(station)
   end
 
-  def view_journey_history
-    @journey_history
+  def previous_journeys
+    @journey_history.each { |journey| puts journey.view_journey }
   end
 
   private
-
   def deduct(min_fare)
     @balance -= MIN_FARE
-  end
-
-  def record_start(station)
-    @current_journey[:entry] = station.name
-  end
-
-  def record_end(station)
-    @current_journey[:exit] = station.name
-  end
-
-  def record_journey
-    @journey_history << { entry: entry_station, exit: exit_station }
-    @current_journey.each_key { |k| @current_journey.delete(k) }
   end
 end

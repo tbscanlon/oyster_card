@@ -5,23 +5,28 @@ describe Oystercard do
   let(:max_limit)     { described_class::MAX_LIMIT }
   let(:min_fare)      { described_class::MIN_FARE }
 
-  let(:entry_station) do
-    entry_station = double("Aldgate")
-    allow(entry_station).to receive(:name) { "Aldgate" }
-    allow(entry_station).to receive(:zone) { 1 }
-    entry_station
+  let(:aldgate) do
+    aldgate = double("Aldgate")
+    allow(aldgate).to receive(:name) { "Aldgate" }
+    allow(aldgate).to receive(:zone) { 1 }
+    aldgate
   end
 
-  let(:exit_station) do
-    exit_station = double("Waterloo")
-    allow(exit_station).to receive(:name) { "Waterloo" }
-    allow(exit_station).to receive(:zone) { 2 }
-    exit_station
+  let(:waterloo) do
+    waterloo = double("Waterloo")
+    allow(waterloo).to receive(:name) { "Waterloo" }
+    allow(waterloo).to receive(:zone) { 2 }
+    waterloo
+  end
+
+  let(:journey) do
+    journey = double("journey")
+    allow(journey).to receive(:aldgate) {  }
   end
 
   describe 'oystercard creation' do
-    it 'starts off a new oystercard with no station' do
-      expect(card.entry_station).to eq nil
+    it 'isn\'t in use when initialized' do
+      expect(card.journey).to eq nil
     end
 
     describe '#journey_history' do
@@ -47,28 +52,17 @@ describe Oystercard do
     end
   end
 
-  describe '#in_journey?' do
-    it 'returns false when customer is not travelling' do
-      expect(card).to_not be_in_journey
-    end
-
-    it 'returns true when the customer is travelling' do
-      card.touch_in(entry_station)
-      expect(card).to be_in_journey
-    end
-  end
-
   describe '#touch_in' do
     context "Touching in at a station" do
       let(:empty_card) { described_class.new }
 
       it 'raises an error if the balance is less than £1' do
-        expect { empty_card.touch_in(entry_station) }.to raise_error("Please top up at least £#{min_fare}")
+        expect { empty_card.touch_in(aldgate) }.to raise_error("Please top up at least £#{min_fare}")
       end
 
       it 'records the start of the journey' do
-        card.touch_in(entry_station)
-        expect(card.entry_station).to eq entry_station.name
+        card.touch_in(aldgate)
+        expect(card.journey.entry_station).to eq aldgate.name
       end
     end
   end
@@ -76,12 +70,12 @@ describe Oystercard do
   describe '#touch_out' do
     context "When touching out" do
       before do
-        card.touch_in(entry_station)
-        card.touch_out(exit_station)
+        card.touch_in(aldgate)
+        card.touch_out(waterloo)
       end
 
-      it 'resets the entry station' do
-        expect(card.entry_station).to be_nil
+      it 'records the exit station' do
+        expect(card.journey.exit_station).to eq waterloo.name
       end
 
       it 'deducts correct amount when journey\'s complete' do
@@ -90,15 +84,15 @@ describe Oystercard do
     end
   end
 
-  describe '#view_journey_history' do
+  describe '#previous_journeys' do
     context 'After a complete journey' do
       before do
-        card.touch_in(entry_station)
-        card.touch_out(exit_station)
+        card.touch_in(aldgate)
+        card.touch_out(waterloo)
       end
 
       it 'shows journey history' do
-        expect(card.view_journey_history).to eq [{entry: entry_station.name, exit: exit_station.name}]
+        expect { card.previous_journeys }.to output("Start: #{aldgate.name}\n Destination: #{waterloo.name}\n").to_stdout
       end
     end
   end
