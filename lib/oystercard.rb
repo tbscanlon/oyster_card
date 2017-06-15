@@ -1,6 +1,8 @@
-# lib/oystercard.rb
+require_relative 'station'
+
 class Oystercard
   attr_reader :balance, :journey_history
+
   DEFAULT_BALANCE = 0
   MAX_LIMIT       = 90
   MIN_FARE        = 1
@@ -50,11 +52,11 @@ class Oystercard
   end
 
   def record_start(station)
-    @current_journey[:entry] = station
+    @current_journey[:entry] = station.name
   end
 
   def record_end(station)
-    @current_journey[:exit] = station
+    @current_journey[:exit] = station.name
   end
 
   def record_journey

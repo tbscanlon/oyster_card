@@ -1,11 +1,23 @@
-require 'oystercard.rb'
+require 'oystercard'
 
 describe Oystercard do
   let(:card)          { described_class.new(min_fare) }
   let(:max_limit)     { described_class::MAX_LIMIT }
   let(:min_fare)      { described_class::MIN_FARE }
-  let(:entry_station) { double("Aldgate") }
-  let(:exit_station)  { double("Waterloo") }
+
+  let(:entry_station) do
+    entry_station = double("Aldgate")
+    allow(entry_station).to receive(:name) { "Aldgate" }
+    allow(entry_station).to receive(:zone) { 1 }
+    entry_station
+  end
+
+  let(:exit_station) do
+    exit_station = double("Waterloo")
+    allow(exit_station).to receive(:name) { "Waterloo" }
+    allow(exit_station).to receive(:zone) { 2 }
+    exit_station
+  end
 
   describe 'oystercard creation' do
     it 'starts off a new oystercard with no station' do
@@ -56,7 +68,7 @@ describe Oystercard do
 
       it 'records the start of the journey' do
         card.touch_in(entry_station)
-        expect(card.entry_station).to eq entry_station
+        expect(card.entry_station).to eq entry_station.name
       end
     end
   end
@@ -86,7 +98,7 @@ describe Oystercard do
       end
 
       it 'shows journey history' do
-        expect(card.view_journey_history).to eq [{entry: entry_station, exit: exit_station}]
+        expect(card.view_journey_history).to eq [{entry: entry_station.name, exit: exit_station.name}]
       end
     end
   end
