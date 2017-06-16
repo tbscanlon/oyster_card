@@ -1,27 +1,29 @@
+require_relative 'station'
+
 class Journey
   attr_reader :entry_station, :exit_station
+
+  MIN_FARE = 1
+  PENALTY_FARE = 6
 
   def initialize
     @entry_station = nil
     @exit_station  = nil
-    @in_journey    = nil
   end
 
-  def record_end(station)
-    @in_journey   = false
-    @exit_station = station.name
+  def start(station)
+    @entry_station = station
   end
 
-  def record_start(station)
-    @in_journey    = true
-    @entry_station = station.name
+  def finish(station)
+    @exit_station = station
   end
 
-  def view_journey
-    "Start: #{@entry_station}\n Destination: #{@exit_station}"
+  def incomplete?
+    entry_station.nil? || exit_station.nil?
   end
 
-  def travelling?
-    @in_journey
+  def fare
+    incomplete? ? PENALTY_FARE : MIN_FARE
   end
 end

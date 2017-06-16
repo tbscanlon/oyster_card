@@ -1,23 +1,18 @@
 require 'station'
 
 describe Station do
-  let (:station_name) { "Aldgate" }
-  let (:station_zone) { 1 }
-  let (:station)      { described_class.new(name: station_name, zone: station_zone) }
 
-  describe 'Initialization' do
-    it 'is a Station' do
-      expect(station).to be_a Station
+  let(:station) { described_class.new(name: "aldgate", zone: 1) }
+
+  describe "#zone" do
+    it "returns the zone that the station belongs to" do
+      expect(station.zone).to eq(1)
     end
   end
 
-  describe 'Attributes' do
-    it 'has a name' do
-      expect(station.name).to eq station_name
-    end
-
-    it 'has a zone' do
-      expect(station.zone).to eq station_zone
+  describe "#name" do
+    it "returns the name of the station" do
+      expect(station.name).to eq("aldgate")
     end
   end
 end

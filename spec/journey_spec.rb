@@ -1,59 +1,43 @@
 require 'journey'
 
 describe Journey do
-  let(:journey) { described_class.new }
 
-  let(:aldgate) do
-    aldgate = double("Aldgate")
-    allow(aldgate).to receive(:name) { "Aldgate" }
-    allow(aldgate).to receive(:zone) { 1 }
-    aldgate
-  end
+  let(:station)      { double(:Waterloo) }
+  let(:exit_station) { double(:Aldgate) }
+  let(:journey)      { described_class.new }
 
-  let(:waterloo) do
-    waterloo = double("Waterloo")
-    allow(waterloo).to receive(:name) { "Waterloo" }
-    allow(waterloo).to receive(:zone) { 1 }
-    waterloo
-  end
-
-  describe 'Initialization' do
-    it 'doesn\'t have an end when initialized' do
-      expect(journey.exit_station).to be_nil
+  describe "#start" do
+    it "should record the entry station" do
+      expect(journey.start(station)).to eq station
     end
   end
 
-  describe '#record_start' do
-    it "records where the journey starts" do
-      journey.record_start(aldgate)
-      expect(journey.entry_station).to eq aldgate.name
+  describe "#finish" do
+   it "should record the exit station" do
+     expect(journey.finish(exit_station)).to eq exit_station
+   end
+  end
+
+  describe "#incomplete?" do
+    it "returns false if a journey has been completed" do
+      journey.start(station)
+      journey.finish(station)
+      expect(journey.incomplete?).to eq false
     end
   end
 
-  describe '#record_end' do
-    it "records where the journey finishes" do
-      journey.record_end(waterloo)
-      expect(journey.exit_station).to eq waterloo.name
+  describe "#fare" do
+    before do
+      journey.start(station)
     end
-  end
 
-  describe '#travelling?' do
-  it 'returns true when customer is travelling' do
-    journey.record_start(aldgate)
-    expect(journey.travelling?).to be true
-  end
+    it "returns 1 for a complete journey" do
+      journey.finish(station)
+      expect(journey.fare).to eq 1
+    end
 
-  it 'returns false when the customer isn\'t travelling' do
-    journey.record_end(waterloo)
-    expect(journey.travelling?).to be false
-  end
-end
-
-  describe '#view_journey' do
-    it "returns the details of the journey" do
-      journey.record_start(aldgate)
-      journey.record_end(waterloo)
-      expect(journey.view_journey).to eq "Start: #{aldgate.name}\n Destination: #{waterloo.name}"
+    it "returns 6 for an incomplete journey" do
+      expect(journey.fare).to eq 6
     end
   end
 end

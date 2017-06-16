@@ -1,52 +1,57 @@
-require_relative 'station'
 require_relative 'journey'
 
 class Oystercard
-  attr_reader :balance, :journey_history, :journey
 
-  DEFAULT_BALANCE = 0
-  MAX_LIMIT       = 90
-  MIN_FARE        = 1
+  attr_reader :balance, :previous_journeys
 
-  def initialize(balance = DEFAULT_BALANCE)
-    @balance          = balance
-    @journey_history  = []
+  MAX_LIMIT = 100
+  MIN_FARE = 1
+
+  def initialize(balance = 0)
+    @balance           = balance
+    @previous_journeys = []
+  end
+
+  def topup(amount)
+    raise "You have reached your maximum balance limit" if too_much? amount
+    @balance += amount
   end
 
   def journey
-    journey_history.last
+    previous_journeys.last
   end
 
-  def top_up(money)
-    raise "Exceeded #{MAX_LIMIT} limit" if too_much? money
-    @balance += money
-  end
-
-  def touch_in(station, journey = Journey.new)
-    raise "Please top up at least £#{MIN_FARE}" if no_money?
-    journey.record_start(station)
-    @journey_history << journey
+  def touch_in(station, new_journey = Journey.new)
+    raise "Please top up" if not_enough_money?
+    deduct(journey.fare) if barrier_jumper?
+    new_journey.start(station)
+    previous_journeys.push(new_journey)
   end
 
   def touch_out(station)
-    deduct(MIN_FARE)
-    journey.record_end(station)
-  end
-
-  def previous_journeys
-    @journey_history.each { |journey| puts journey.view_journey }
+    previous_journeys.push(Journey.new) unless journey.incomplete?
+    journey.finish(station)
+    deduct(journey.fare)
   end
 
   private
-  def deduct(min_fare)
-    @balance -= MIN_FARE
+  def deduct(amount)
+    @balance-= amount
+  end
+
+  def barrier_jumper?
+    case
+    when @previous_journeys.empty? then false
+    when journey.incomplete? then true
+    else false
+    end
   end
 
   def too_much?(money)
-   @balance + money >= MAX_LIMIT
+    @balance + money > MAX_LIMIT
   end
 
-  def no_money?
-    @balance < 1
+  def not_enough_money?
+    @balance < MIN_FARE
   end
 end
