@@ -18,12 +18,12 @@ class Oystercard
   end
 
   def top_up(money)
-    raise "Exceeded #{MAX_LIMIT} limit" if @balance + money >= MAX_LIMIT
+    raise "Exceeded #{MAX_LIMIT} limit" if too_much? money
     @balance += money
   end
 
   def touch_in(station, journey = Journey.new)
-    raise "Please top up at least £#{MIN_FARE}" if @balance < 1
+    raise "Please top up at least £#{MIN_FARE}" if no_money?
     journey.record_start(station)
     @journey_history << journey
   end
@@ -40,5 +40,13 @@ class Oystercard
   private
   def deduct(min_fare)
     @balance -= MIN_FARE
+  end
+
+  def too_much?(money)
+   @balance + money >= MAX_LIMIT
+  end
+
+  def no_money?
+    @balance < 1
   end
 end
